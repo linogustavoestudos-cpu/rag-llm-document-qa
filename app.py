@@ -117,6 +117,7 @@ def build_vectorstore(
     persist_dir: str | None = None,
     batch_size: int = 50,
     pause: float = 62.0,
+    on_progress=None,
 ) -> Chroma:
     """Indexa em lotes para respeitar o limite de requisições do plano gratuito."""
     store = Chroma(
@@ -148,7 +149,10 @@ def build_vectorstore(
                     raise
                 print(f"  aguardando limite da API... ({str(exc)[:60]})", file=sys.stderr)
                 time.sleep(30)
-        print(f"{min(start + batch_size, len(chunks))}/{len(chunks)} chunks indexados")
+        done = min(start + batch_size, len(chunks))
+        print(f"{done}/{len(chunks)} chunks indexados")
+        if on_progress:
+            on_progress(done, len(chunks))
         if start + batch_size < len(chunks):
             time.sleep(pause)
     return store

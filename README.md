@@ -1,11 +1,3 @@
----
-title: RAG Document QA
-emoji: 📄
-sdk: gradio
-app_file: space_app.py
-pinned: false
----
-
 # RAG Document QA — perguntas e respostas sobre PDFs (LangChain + ChromaDB + Gemini)
 
 Responde perguntas sobre um PDF usando **apenas o conteúdo do documento** e cita as páginas usadas.
@@ -55,21 +47,34 @@ A primeira pergunta passa pelo caso da palavra hifenizada (`cin-` / `quenta`); a
 ## Como rodar
 
 ```bash
-git clone <[URL-DO-REPOSITORIO](https://github.com/linogustavoestudos-cpu/rag-llm-document-qa)>
-cd <rag-llm-document-qa>
+git clone https://github.com/linogustavoestudos-cpu/rag-llm-document-qa
+cd rag-llm-document-qa
 pip install -r requirements.txt
-cp .env.example .env     # coloque sua GOOGLE_API_KEY (https://aistudio.google.com/apikey)
+cp .env.example .env     # (Windows: copy .env.example .env) e coloque sua GOOGLE_API_KEY
+                         # chave em https://aistudio.google.com/apikey
 
+# linha de comando
 python app.py documento.pdf -q "Quais são os direitos do titular?"
-python app.py documento.pdf                      # modo interativo
+python app.py documento.pdf                        # modo interativo
 python app.py documento.pdf --persist-dir .chroma  # reaproveita o índice
+
+# interface web (Streamlit, precisa de Python 3.11+)
+streamlit run streamlit_app.py
 ```
 
 Os nomes dos modelos mudam com frequência: ajuste `EMBEDDING_MODEL` e `GEMINI_MODELS` no `.env`.
-O PDF não está incluído no repositório.
+Para a interface web usar um PDF de exemplo automaticamente, coloque-o em `data/lgpd.pdf`.
+
+## Publicar a interface no Streamlit Community Cloud
+
+1. Em share.streamlit.io, conecte sua conta do GitHub e escolha este repositório, o branch `main` e o arquivo `streamlit_app.py`.
+2. Em *Advanced settings*, escolha Python 3.12 ou 3.13 e, em *Secrets*, cole: `GOOGLE_API_KEY = "sua_chave"`.
+3. Clique em *Deploy*. A chave fica só nas configurações do Streamlit, nunca no repositório.
 
 ## Limitações
 
-- Plano gratuito: indexar um PDF de ~120 chunks leva cerca de 2 a 3 minutos.
+- Plano gratuito do Gemini: indexar um PDF de ~120 chunks leva cerca de 2 a 3 minutos.
+- A demo pública compartilha uma cota gratuita: há limite de tamanho (10 MB / 250 trechos) e ela pode ficar indisponível se a cota acabar.
 - A qualidade da resposta depende do trecho recuperado; perguntas amplas podem precisar de `-k` maior.
+- O "º" do PDF às vezes sai como letra solta na extração (ex.: "Art. 7 o").
 - Avaliação pequena (9 perguntas, só LGPD).
