@@ -124,9 +124,18 @@ def build_vectorstore(
         embedding_function=embeddings,
         persist_directory=persist_dir,
     )
-    if store._collection.count() > 0:
-        print(f"Índice existente reaproveitado ({store._collection.count()} chunks).")
+    existing = store._collection.count()
+    if existing == len(chunks):
+        print(f"Índice existente reaproveitado ({existing} chunks).")
         return store
+    if existing:  # indexação anterior interrompida: recria do zero
+        print(f"Índice incompleto ({existing}/{len(chunks)} chunks). Recriando...")
+        store.delete_collection()
+        store = Chroma(
+            collection_name=f"rag_{digest}",
+            embedding_function=embeddings,
+            persist_directory=persist_dir,
+        )
 
     for start in range(0, len(chunks), batch_size):
         batch = chunks[start : start + batch_size]
