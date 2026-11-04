@@ -4,3 +4,4 @@ __pycache__/
 .chroma/
 chroma_db/
 .ipynb_checkpoints/
+.streamlit/secrets.toml
