@@ -55,8 +55,8 @@ A primeira pergunta passa pelo caso da palavra hifenizada (`cin-` / `quenta`); a
 ## Como rodar
 
 ```bash
-git clone <URL-DO-REPOSITORIO>
-cd <PASTA>
+git clone <[URL-DO-REPOSITORIO](https://github.com/linogustavoestudos-cpu/rag-llm-document-qa)>
+cd <rag-llm-document-qa>
 pip install -r requirements.txt
 cp .env.example .env     # coloque sua GOOGLE_API_KEY (https://aistudio.google.com/apikey)
 
