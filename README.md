@@ -1,9 +1,23 @@
 # RAG Document QA — perguntas e respostas sobre PDFs (LangChain + ChromaDB + Gemini)
 
+**Demo ao vivo:** https://rag-llm-document.streamlit.app
+
 Responde perguntas sobre um PDF usando **apenas o conteúdo do documento** e cita as páginas usadas.
 Se a resposta não está no texto, diz `Não sei com base no documento.`
 
 Caso de uso testado: **LGPD (Lei nº 13.709/2018)**.
+
+## O que é (e o que não é)
+
+É uma **aplicação RAG** (Retrieval-Augmented Generation). Eu não treinei nenhum modelo: o texto é gerado pelo **Gemini via API** (família Flash-Lite, com modelos reserva) e a busca usa embeddings `gemini-embedding-001`. O trabalho do projeto está no pipeline em volta do modelo: leitura e limpeza do PDF, chunking, indexação no ChromaDB, recuperação, prompts que limitam a resposta ao documento, tratamento de falhas e avaliação da busca.
+
+## Funcionalidades da interface
+
+- Upload de PDF (até 10 MB) ou PDF de exemplo (LGPD) com perguntas sugeridas.
+- Resposta com as páginas usadas e **"Ver trechos usados"**, que mostra os trechos recuperados para conferir a fonte.
+- Recusa quando a informação não está no documento, sem inventar.
+- Histórico da conversa na tela; **cada pergunta é independente** (não há memória entre perguntas).
+- Limites de demo para proteger a cota gratuita: 15 perguntas por sessão e PDFs de até 250 trechos.
 
 ## Como funciona
 
@@ -16,6 +30,7 @@ Decisões que vieram de problemas reais durante o desenvolvimento:
 - **Resposta vazia por `RECITATION`**: em perguntas como "bases legais", o modelo devolvia vazio ao tentar citar o texto da lei. O app tenta primeiro o prompt literal e, se vier vazio, refaz com um prompt que pede resumo com as próprias palavras.
 - **Modelo reserva**: se um modelo estiver indisponível (erro 503), tenta o próximo da lista.
 - **Limite do plano gratuito**: a indexação é feita em lotes, com pausas, para evitar erro 429.
+- **Índice incompleto**: se a indexação for interrompida, o índice parcial é recriado em vez de reaproveitado.
 - **Hifenização do PDF**: a lei traz `cin-` / `quenta` quebrado em duas linhas. Isso atrapalhou minha avaliação (a âncora "cinquenta milhões" não existia no texto extraído) e pode prejudicar a busca. A causa que eu suspeitava (chunking) estava errada; os chunks mostraram o motivo real.
 
 ## Avaliação da busca
@@ -30,19 +45,22 @@ Decisões que vieram de problemas reais durante o desenvolvimento:
 
 Amostra pequena: serve como verificação de sanidade, não como benchmark.
 
-## Exemplo de saída (execução real no Colab, PDF da LGPD)
+## Exemplos de saída (PDF da LGPD)
 
 ```
 PERGUNTA: Qual é o valor máximo da multa simples por infração?
-PÁGINAS RECUPERADAS: [35, 35, 38, 37, 36]
 RESPOSTA: ... limitada, no total, a R$ 50.000.000,00 (cinquenta milhões de reais) por infração.
 (páginas: 35)
+
+PERGUNTA: Posso criar uma IA para ajudar a população sem violar a LGPD?
+RESPOSTA: O documento não fornece informações sobre a criação de inteligência artificial.
+Ele menciona apenas que a LGPD dispõe sobre o tratamento de dados pessoais ... (páginas: 8, 49)
 
 PERGUNTA: Qual é a capital da França?
 RESPOSTA: Não sei com base no documento.
 ```
 
-A primeira pergunta passa pelo caso da palavra hifenizada (`cin-` / `quenta`); a segunda mostra a recusa quando a resposta não está no documento.
+A primeira passa pelo caso da palavra hifenizada (`cin-` / `quenta`). A segunda mostra o modelo limitado ao que o texto diz, sem opinar além dele. A terceira mostra a recusa quando a resposta não está no documento.
 
 ## Como rodar
 
@@ -73,8 +91,9 @@ Para a interface web usar um PDF de exemplo automaticamente, coloque-o em `data/
 
 ## Limitações
 
-- Plano gratuito do Gemini: indexar um PDF de ~120 chunks leva cerca de 2 a 3 minutos.
-- A demo pública compartilha uma cota gratuita: há limite de tamanho (10 MB / 250 trechos) e ela pode ficar indisponível se a cota acabar.
+- Plano gratuito do Gemini: indexar um PDF de ~120 chunks leva cerca de 2 a 3 minutos, e o índice fica em memória (some quando o app reinicia ou "dorme").
+- A demo pública compartilha uma cota gratuita: pode ficar indisponível se a cota acabar.
+- Sem memória de conversa: perguntas de continuação ("e a multa?") não herdam o contexto da anterior.
 - A qualidade da resposta depende do trecho recuperado; perguntas amplas podem precisar de `-k` maior.
-- O "º" do PDF às vezes sai como letra solta na extração (ex.: "Art. 7 o").
+- Só PDFs com texto (sem OCR para PDFs escaneados).
 - Avaliação pequena (9 perguntas, só LGPD).

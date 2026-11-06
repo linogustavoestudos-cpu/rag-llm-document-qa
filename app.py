@@ -165,10 +165,23 @@ def format_context(chunks: list[Document]) -> str:
     return "\n\n".join(f"[página {d.metadata['page']}]\n{d.page_content}" for d in chunks)
 
 
+RECUSA = "Não sei com base no documento."
+_RECUSA_RE = re.compile(
+    r"\s*n[ãa]o sei com base no documento\.?\s*(\(\s*p[áa]ginas?:[^)]*\))?\s*", re.IGNORECASE
+)
+
+
+def clean_answer(text: str) -> str:
+    """Se a resposta é só a recusa (com ou sem '(páginas: ...)'), devolve a frase padrão."""
+    text = text.strip()
+    return RECUSA if _RECUSA_RE.fullmatch(text) else text
+
+
 def answer(question: str, retriever, models: list[str]) -> dict | None:
     """Tenta cada modelo; se a resposta vier vazia, tenta o prompt parafraseado."""
     chunks = retriever.invoke(question)
     pages = [d.metadata["page"] for d in chunks]
+    sources = [{"page": d.metadata["page"], "text": d.page_content} for d in chunks]
     context = format_context(chunks)
 
     for model_name in models:
@@ -182,7 +195,13 @@ def answer(question: str, retriever, models: list[str]) -> dict | None:
                 print(f"  (falhou com {model_name}: {str(exc)[:80]})", file=sys.stderr)
                 break  # passa para o próximo modelo
             if text.strip():
-                return {"answer": text.strip(), "model": model_name, "mode": mode, "pages": pages}
+                return {
+                    "answer": clean_answer(text),
+                    "model": model_name,
+                    "mode": mode,
+                    "pages": pages,
+                    "sources": sources,
+                }
             print(f"  (resposta vazia com {model_name} no modo {mode})", file=sys.stderr)
     return None
 
