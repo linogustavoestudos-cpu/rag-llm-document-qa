@@ -45,6 +45,10 @@ Decisões que vieram de problemas reais durante o desenvolvimento:
 
 Amostra pequena: serve como verificação de sanidade, não como benchmark.
 
+### Avaliação manual das respostas
+
+Além da busca, testei a demo pública com 12 perguntas sobre a LGPD: 9 respostas corretas, 2 recusas corretas (perguntas fora do documento) e 1 parcial. A tabela com cada pergunta, as páginas citadas e as falhas encontradas está em [avaliacao_manual.md](avaliacao_manual.md).
+
 ## Exemplos de saída (PDF da LGPD)
 
 ```
@@ -97,3 +101,4 @@ Para a interface web usar um PDF de exemplo automaticamente, coloque-o em `data/
 - A qualidade da resposta depende do trecho recuperado; perguntas amplas podem precisar de `-k` maior.
 - Só PDFs com texto (sem OCR para PDFs escaneados).
 - Avaliação pequena (9 perguntas, só LGPD).
+- Perguntas amplas podem vir incompletas: na avaliação manual, a pergunta sobre as sanções da ANPD listou só duas das sanções porque um dos trechos não foi recuperado.
